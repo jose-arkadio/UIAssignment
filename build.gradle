@@ -1,6 +1,18 @@
 plugins {
+    id "com.palantir.docker-run" version "0.35.0"
     id 'java'
 }
 
-group = 'com.ui'
+group 'com.ui'
 version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dockerRun{
+    name 'postgesql-docker'
+    image 'postgres'
+    ports '5532:5432'
+    env 'POSTGRES_USER':'ui_test', 'POSTGRES_PASSWORD':'ui_test'
+}
