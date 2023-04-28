@@ -7,6 +7,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -101,6 +103,44 @@ class UserControllerTest {
                 .andExpect(jsonPath("$[0].createdAt", is(String.valueOf(userToFound.getCreatedAt()))))
                 .andExpect(jsonPath("$[0].updatedAt", is(String.valueOf(userToFound.getUpdatedAt()))))
                 .andExpect(jsonPath("$[0].password").doesNotHaveJsonPath());
+    }
+
+    @Test
+    public void shouldFoundSingleUserDetails() throws Exception {
+
+        //given
+        BasicUserDto userToFound = givenUser();
+
+        //when
+        when(userService.findUserByAcct(userToFound.getAcct())).thenReturn(userToFound);
+
+        //then
+        mockMvc.perform(get("/users/" + userToFound.getAcct())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.acct", is(userToFound.getAcct())))
+                .andExpect(jsonPath("$.fullName", is(userToFound.getFullName())))
+                .andExpect(jsonPath("$.createdAt", is(String.valueOf(userToFound.getCreatedAt()))))
+                .andExpect(jsonPath("$.updatedAt", is(String.valueOf(userToFound.getUpdatedAt()))))
+                .andExpect(jsonPath("$.password").doesNotHaveJsonPath());
+    }
+
+    @Test
+    public void shouldNotFoundSingleUserDetails() throws Exception {
+
+        //given
+        String customMessage = "User not found";
+        String acct = givenUser().getAcct();
+
+        //when
+        when(userService.findUserByAcct(acct)).thenThrow(new ResourceNotFoundException(customMessage));
+
+        //then
+        mockMvc.perform(get("/users/" + acct)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(HttpStatus.NOT_FOUND.value())))
+                .andExpect(jsonPath("$.message", is(customMessage)));
     }
 
     private static BasicUserDto givenUser() {

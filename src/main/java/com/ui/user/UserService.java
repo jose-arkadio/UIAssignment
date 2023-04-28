@@ -37,4 +37,11 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    public BasicUserDto findUserByAcct(String acct) {
+
+        return userRepository.findByAcct(acct)
+                .orElseThrow(() -> new ResourceNotFoundException("User [" + acct + "] has not been found"))
+                .toBasicUserDto();
+    }
+
 }
