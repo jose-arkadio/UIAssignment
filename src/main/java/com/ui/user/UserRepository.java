@@ -7,4 +7,6 @@ import java.util.List;
 interface UserRepository extends Repository<User, String> {
 
     List<User> findAll();
+
+    List<User> findByFullName(String fullName);
 }

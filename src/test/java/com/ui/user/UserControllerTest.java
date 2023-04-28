@@ -1,7 +1,9 @@
 package com.ui.user;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -31,6 +33,11 @@ class UserControllerTest {
     @MockBean
     private UserService userService;
 
+    @BeforeEach
+    public void setUp() {
+        Mockito.reset(userService);
+    }
+
     @Test
     public void shouldReturnSingleUserOnList() throws Exception {
 
@@ -48,10 +55,8 @@ class UserControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].acct", is(user.getAcct())))
                 .andExpect(jsonPath("$[0].fullName", is(user.getFullName())))
-                .andExpect(jsonPath("$[0].createdAt", is(user.getCreatedAt()
-                        .toString())))
-                .andExpect(jsonPath("$[0].updatedAt", is(user.getUpdatedAt()
-                        .toString())))
+                .andExpect(jsonPath("$[0].createdAt", is(String.valueOf(user.getCreatedAt()))))
+                .andExpect(jsonPath("$[0].updatedAt", is(String.valueOf(user.getUpdatedAt()))))
                 .andExpect(jsonPath("$[0].password").doesNotHaveJsonPath());
     }
 
@@ -74,12 +79,40 @@ class UserControllerTest {
                 .andExpect(jsonPath("$", hasSize(expectedSize)));
     }
 
+    @Test
+    public void shouldFoundSingleUserByFullname() throws Exception {
+
+        //given
+        String nameToFound = "Steven Spielberg";
+        BasicUserDto userToFound = givenUserWithFullName(nameToFound);
+
+        List<BasicUserDto> foundUsers = List.of(userToFound);
+
+        //when
+        when(userService.findUsersByFullName(nameToFound)).thenReturn(foundUsers);
+
+        //then
+        mockMvc.perform(get("/users").param("fullName", nameToFound)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].acct", is(userToFound.getAcct())))
+                .andExpect(jsonPath("$[0].fullName", is(nameToFound)))
+                .andExpect(jsonPath("$[0].createdAt", is(String.valueOf(userToFound.getCreatedAt()))))
+                .andExpect(jsonPath("$[0].updatedAt", is(String.valueOf(userToFound.getUpdatedAt()))))
+                .andExpect(jsonPath("$[0].password").doesNotHaveJsonPath());
+    }
+
     private static BasicUserDto givenUser() {
+        return givenUserWithFullName("Steven Spielberg");
+    }
+
+    private static BasicUserDto givenUserWithFullName(String fullname) {
         BasicUserDto basicUserDto = new BasicUserDto();
         basicUserDto.setAcct(UUID.randomUUID()
                 .toString());
         basicUserDto.setPassword("teST@123");
-        basicUserDto.setFullName("Steven Spielberg");
+        basicUserDto.setFullName(fullname);
         basicUserDto.setCreatedAt(LocalDateTime.now()
                 .truncatedTo(ChronoUnit.MILLIS));
         basicUserDto.setUpdatedAt(LocalDateTime.now()

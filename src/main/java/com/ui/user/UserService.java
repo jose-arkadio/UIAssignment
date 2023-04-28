@@ -1,5 +1,6 @@
 package com.ui.user;
 
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,19 @@ public class UserService {
         List<User> allUsers = userRepository.findAll();
 
         return allUsers.stream()
+                .map(User::toBasicUserDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<BasicUserDto> findUsersByFullName(String fullName) {
+
+        List<User> foundUsers = userRepository.findByFullName(fullName);
+
+        if (foundUsers.isEmpty()) {
+            throw new ResourceNotFoundException("No users [fullname=" + fullName + "] have been found");
+        }
+
+        return foundUsers.stream()
                 .map(User::toBasicUserDto)
                 .collect(Collectors.toList());
     }
